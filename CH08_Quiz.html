@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH08 模擬試題測驗系統</title>
+    <style>
+        body {
+            background-color: #242424;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            background-color: #2b2b2b;
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .question-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .question-label {
+            width: 130px;
+            text-align: right;
+            margin-right: 15px;
+            font-size: 16px;
+        }
+        input[type="text"] {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #444;
+            padding: 8px;
+            border-radius: 5px;
+            width: 120px;
+            font-size: 16px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .result-label {
+            margin-left: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn-submit {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-submit:hover {
+            background-color: #2980b9;
+        }
+        .summary {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .correct { color: #2ecc71; }
+        .incorrect { color: #e74c3c; }
+        .warning { color: #f1c40f; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>CH08 模擬試題</h1>
+    <div id="quiz-container"></div>
+    <button class="btn-submit" onclick="checkAnswers()">送出並對答案</button>
+    <div id="summary" class="summary"></div>
+</div>
+
+<script>
+    // CH08 標準答案字典
+    const correctAnswers = {
+        "第 01 題 (A)": "YES",
+        "第 01 題 (B)": "YES",
+        "第 01 題 (C)": "YES",
+        "第 01 題 (D)": "NO",
+        "第 02 題 (1)": "A",
+        "第 02 題 (2)": "C",
+        "第 03 題 (1)": "C",
+        "第 03 題 (2)": "A",
+        "第 03 題 (3)": "B",
+        "第 04 題 (1)": "C",
+        "第 04 題 (2)": "B",
+        "第 04 題 (3)": "C",
+        "第 04 題 (4)": "B",
+        "第 05 題 (1)": "D",
+        "第 05 題 (2)": "C",
+        "第 05 題 (3)": "E",
+        "第 06 題 (A)": "YES",
+        "第 06 題 (B)": "YES",
+        "第 06 題 (C)": "YES",
+        "第 07 題 (A)": "YES",
+        "第 07 題 (B)": "NO",
+        "第 07 題 (C)": "NO",
+        "第 07 題 (D)": "NO"
+    };
+
+    const container = document.getElementById('quiz-container');
+
+    // 動態生成題目輸入框
+    Object.keys(correctAnswers).forEach(qName => {
+        const row = document.createElement('div');
+        row.className = 'question-row';
+
+        const label = document.createElement('div');
+        label.className = 'question-label';
+        label.textContent = qName + "：";
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'input-' + qName;
+        input.placeholder = "請填入答案";
+
+        const resultLabel = document.createElement('div');
+        resultLabel.className = 'result-label';
+        resultLabel.id = 'result-' + qName;
+
+        row.appendChild(label);
+        row.appendChild(input);
+        row.appendChild(resultLabel);
+        container.appendChild(row);
+    });
+
+    // 檢查答案邏輯
+    function isAnswerCorrect(rawUser, correctAns) {
+        const cleanUser = rawUser.toUpperCase().replace(/[\s,，]/g, '');
+        const cleanCorrect = correctAns.toUpperCase().replace(/[\s,，]/g, '');
+        
+        // 答案長度大於2時，要求順序與內容完全吻合 (例如 YES, NO)
+        if (cleanCorrect.length > 2) {
+            return cleanUser === cleanCorrect;
+        } 
+        // 否則允許打亂順序 (包含單選、多選及 O/X 題型)
+        else {
+            return cleanUser.split('').sort().join('') === cleanCorrect.split('').sort().join('');
+        }
+    }
+
+    function checkAnswers() {
+        let correctCount = 0;
+        const totalCount = Object.keys(correctAnswers).length;
+
+        Object.keys(correctAnswers).forEach(qName => {
+            const rawInput = document.getElementById('input-' + qName).value;
+            const correctAns = correctAnswers[qName];
+            const resultElement = document.getElementById('result-' + qName);
+
+            if (rawInput !== "" && isAnswerCorrect(rawInput, correctAns)) {
+                resultElement.textContent = "✔ 正確";
+                resultElement.className = "result-label correct";
+                correctCount++;
+            } else {
+                resultElement.textContent = "✘ 錯誤 (正解: " + correctAns + ")";
+                resultElement.className = "result-label incorrect";
+            }
+        });
+
+        // 顯示總分
+        const summaryElement = document.getElementById('summary');
+        summaryElement.textContent = "測驗結果: 答對 " + correctCount + " / " + totalCount + " 題";
+
+        if (correctCount === totalCount) {
+            summaryElement.className = "summary correct";
+        } else if (correctCount >= totalCount * 0.6) {
+            summaryElement.className = "summary warning";
+        } else {
+            summaryElement.className = "summary incorrect";
+        }
+    }
+</script>
+
+</body>
+</html>
