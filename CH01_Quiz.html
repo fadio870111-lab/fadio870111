@@ -21,10 +21,26 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .btn-back {
+            display: inline-block;
+            background-color: #7f8c8d;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
+        .btn-back:hover {
+            background-color: #95a5a6;
         }
         h1 {
             text-align: center;
             font-size: 24px;
+            margin-top: 0;
             margin-bottom: 20px;
         }
         .instruction-box {
@@ -87,29 +103,17 @@
         .correct { color: #2ecc71; }
         .incorrect { color: #e74c3c; }
         .warning { color: #f1c40f; }
-        .btn-back {
-    display: inline-block;
-    background-color: #7f8c8d;
-    color: white;
-    text-decoration: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    font-size: 14px;
-    margin-bottom: 15px;
-    transition: 0.2s;
-}
-.btn-back:hover {
-    background-color: #95a5a6;
-}
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- 新增的返回主選單按鈕 -->
+    <a href="index.html" class="btn-back">⬅ 返回主選單</a>
+    
     <h1>CH01 模擬試題</h1>
     
     <div class="instruction-box">
-        <a href="index.html" class="btn-back">⬅ 返回主選單</a>
         <strong>【第 02 題 連線題代號說明】</strong><br>
         請將左側型態填入對應的右側代號 (若有多個請一起填，如 CE)：<br>
         A: age = 12<br>
@@ -126,7 +130,6 @@
 </div>
 
 <script>
-    // CH01 標準答案字典
     const correctAnswers = {
         "第 01 題 (1)": "C",
         "第 01 題 (2)": "A",
@@ -144,7 +147,6 @@
 
     const container = document.getElementById('quiz-container');
 
-    // 動態生成題目輸入框
     Object.keys(correctAnswers).forEach(qName => {
         const row = document.createElement('div');
         row.className = 'question-row';
@@ -168,12 +170,10 @@
         container.appendChild(row);
     });
 
-    // 處理字串：轉大寫、去空白、去逗號、排序字元
     function processString(str) {
         return str.toUpperCase().replace(/[\s,，]/g, '').split('').sort().join('');
     }
 
-    // 檢查答案邏輯
     function checkAnswers() {
         let correctCount = 0;
         const totalCount = Object.keys(correctAnswers).length;
@@ -196,7 +196,6 @@
             }
         });
 
-        // 顯示總分
         const summaryElement = document.getElementById('summary');
         summaryElement.textContent = "測驗結果: 答對 " + correctCount + " / " + totalCount + " 題";
 
@@ -210,5 +209,7 @@
     }
 </script>
 
+</body>
+</html>
 </body>
 </html>
