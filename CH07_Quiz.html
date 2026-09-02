@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH07 模擬試題測驗系統</title>
+    <style>
+        body {
+            background-color: #242424;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            background-color: #2b2b2b;
+            width: 100%;
+            max-width: 1000px; /* 為了容納右側的選項，將寬度加寬 */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .btn-back {
+            display: inline-block;
+            background-color: #7f8c8d;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
+        .btn-back:hover {
+            background-color: #95a5a6;
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+        .question-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #444; /* 加上虛線讓對齊更清楚 */
+        }
+        .question-row:last-child {
+            border-bottom: none;
+        }
+        .question-label {
+            width: 260px; 
+            text-align: right;
+            margin-right: 15px;
+            font-size: 16px;
+        }
+        input[type="text"] {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #666;
+            padding: 8px;
+            border-radius: 5px;
+            width: 60px;
+            font-size: 16px;
+            text-align: center;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+            background-color: #2c3e50;
+        }
+        .result-label {
+            width: 120px; /* 固定寬度，避免顯示對錯時擠壓到後面的文字 */
+            margin-left: 15px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .desc-label {
+            flex: 1;
+            margin-left: 10px;
+            font-size: 15px;
+            color: #bdc3c7; /* 淺灰色，用來顯示選項 */
+            letter-spacing: 0.5px;
+        }
+        .btn-submit {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: 0.2s;
+        }
+        .btn-submit:hover {
+            background-color: #2980b9;
+        }
+        .summary {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .correct { color: #2ecc71; }
+        .incorrect { color: #e74c3c; }
+        .warning { color: #f1c40f; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="btn-back">⬅ 返回主選單</a>
+    <h1>CH07 模擬試題</h1>
+    
+    <div id="quiz-container"></div>
+
+    <button class="btn-submit" onclick="checkAnswers()">送出並對答案</button>
+    <div id="summary" class="summary"></div>
+</div>
+
+<script>
+    // 將字典轉換為陣列結構，方便在同一列顯示題目、解答與右側選項
+    // 注意：12題之後的選項順序已經刻意打亂，解答也對應更新！
+    const quizData = [
+        { qName: "第 01 題", ans: "B", desc: "" },
+        { qName: "第 02 題", ans: "A", desc: "" },
+        { qName: "第 03 題", ans: "AC", desc: "" },
+        { qName: "第 04 題", ans: "D", desc: "" },
+        { qName: "第 05 題", ans: "AC", desc: "" },
+        { qName: "第 06 題", ans: "AD", desc: "" },
+        { qName: "第 07 題 (1)", ans: "A", desc: "" },
+        { qName: "第 07 題 (2)", ans: "A", desc: "" },
+        { qName: "第 07 題 (3)", ans: "B", desc: "" },
+        { qName: "第 08 題 (1)", ans: "A", desc: "" },
+        { qName: "第 08 題 (2)", ans: "A", desc: "" },
+        { qName: "第 09 題 (1)", ans: "D", desc: "" },
+        { qName: "第 09 題 (2)", ans: "C", desc: "" },
+        { qName: "第 10 題 (1)", ans: "O", desc: "" },
+        { qName: "第 10 題 (2)", ans: "X", desc: "" },
+        { qName: "第 10 題 (3)", ans: "O", desc: "" },
+        { qName: "第 11 題", ans: "D", desc: "" },
+        
+        // 第 12 題 (os) - 打亂配對
+        { qName: "第 12 題 (os.getcwd)", ans: "C", desc: "A: 切換指定目錄" },
+        { qName: "第 12 題 (os.chdir)", ans: "A", desc: "B: 刪除一個空目錄" },
+        { qName: "第 12 題 (os.mkdir)", ans: "D", desc: "C: 列出目前路徑" },
+        { qName: "第 12 題 (os.rmdir)", ans: "B", desc: "D: 新增目錄" },
+        
+        // 第 13 題 (os.path) - 打亂配對
+        { qName: "第 13 題 (os.path.dirname)", ans: "C", desc: "A: 檢查路徑是否存在" },
+        { qName: "第 13 題 (os.path.basename)", ans: "D", desc: "B: 判斷指定的路徑是否為檔案" },
+        { qName: "第 13 題 (os.path.exists)", ans: "A", desc: "C: 只顯示路徑的目錄名稱" },
+        { qName: "第 13 題 (os.path.isdir)", ans: "E", desc: "D: 只顯示路徑裡的檔案名稱" },
+        { qName: "第 13 題 (os.path.isfile)", ans: "B", desc: "E: 判斷指定的路徑是否為目錄" },
+        
+        // 第 14 題 (datetime) - 打亂配對
+        { qName: "第 14 題 (datetime.date)", ans: "B", desc: "A: 判斷現在的全部時間" },
+        { qName: "第 14 題 (datetime.time)", ans: "C", desc: "B: 判斷現在的年月日" },
+        { qName: "第 14 題 (datetime.datetime)", ans: "A", desc: "C: 判斷現在的小時\\分鐘\\秒\\毫秒" },
+        
+        // 第 15 題 (時間格式化) - 打亂配對
+        { qName: "第 15 題 (%Y)", ans: "E", desc: "A: 分鐘" },
+        { qName: "第 15 題 (%m)", ans: "C", desc: "B: 星期幾完整名稱" },
+        { qName: "第 15 題 (%d)", ans: "H", desc: "C: 數字月份" },
+        { qName: "第 15 題 (%H)", ans: "J", desc: "D: 12小時制的小時" },
+        { qName: "第 15 題 (%I)", ans: "D", desc: "E: 四位數的年份" },
+        { qName: "第 15 題 (%M)", ans: "A", desc: "F: 星期幾簡寫" },
+        { qName: "第 15 題 (%S)", ans: "I", desc: "G: 月份完整名稱" },
+        { qName: "第 15 題 (%a)", ans: "F", desc: "H: 數字日期" },
+        { qName: "第 15 題 (%A)", ans: "B", desc: "I: 秒數" },
+        { qName: "第 15 題 (%b)", ans: "K", desc: "J: 24小時制的小時" },
+        { qName: "第 15 題 (%B)", ans: "G", desc: "K: 月份簡寫" },
+        
+        // 第 16 題 (random) - 打亂配對
+        { qName: "第 16 題 (random)", ans: "C", desc: "A: 可以生成一個指定範圍的整數前後值都包含" },
+        { qName: "第 16 題 (randint)", ans: "A", desc: "B: 可以從序列中隨機挑選值" },
+        { qName: "第 16 題 (randrange)", ans: "D", desc: "C: 生成0~1之間的浮點數包含0但不包含1" },
+        { qName: "第 16 題 (choice)", ans: "B", desc: "D: 可以生成指定的範圍整數並能設定間格" },
+        
+        // 第 17 題 (math) - 打亂配對
+        { qName: "第 17 題 (ceil)", ans: "C", desc: "A: 無條件捨去" },
+        { qName: "第 17 題 (floor)", ans: "A", desc: "B: 取絕對值" },
+        { qName: "第 17 題 (fabs)", ans: "B", desc: "C: 無條件進位" }
+    ];
+
+    const container = document.getElementById('quiz-container');
+
+    // 動態生成題目UI
+    quizData.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'question-row';
+
+        // 題目文字
+        const label = document.createElement('div');
+        label.className = 'question-label';
+        label.textContent = item.qName + "：";
+
+        // 答案輸入框
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'input-' + index; // 使用 index 做 ID 避免特殊符號出錯
+
+        // 對錯標籤
+        const resultLabel = document.createElement('div');
+        resultLabel.className = 'result-label';
+        resultLabel.id = 'result-' + index;
+
+        // 右側選項文字 (如果有才產生)
+        const descLabel = document.createElement('div');
+        descLabel.className = 'desc-label';
+        descLabel.textContent = item.desc;
+
+        row.appendChild(label);
+        row.appendChild(input);
+        row.appendChild(resultLabel);
+        row.appendChild(descLabel);
+        
+        container.appendChild(row);
+    });
+
+    // 檢查答案邏輯
+    function isAnswerCorrect(rawUser, correctAns) {
+        const cleanUser = rawUser.toUpperCase().replace(/[\s,，]/g, '');
+        const cleanCorrect = correctAns.toUpperCase().replace(/[\s,，]/g, '');
+        
+        if (cleanCorrect.length > 2) {
+            return cleanUser === cleanCorrect;
+        } else {
+            return cleanUser.split('').sort().join('') === cleanCorrect.split('').sort().join('');
+        }
+    }
+
+    function checkAnswers() {
+        let correctCount = 0;
+        const totalCount = quizData.length;
+
+        quizData.forEach((item, index) => {
+            const rawInput = document.getElementById('input-' + index).value;
+            const correctAns = item.ans;
+            const resultElement = document.getElementById('result-' + index);
+
+            if (rawInput !== "" && isAnswerCorrect(rawInput, correctAns)) {
+                resultElement.textContent = "✔ 正確";
+                resultElement.className = "result-label correct";
+                correctCount++;
+            } else {
+                resultElement.textContent = "✘ 錯誤 (正解: " + correctAns + ")";
+                resultElement.className = "result-label incorrect";
+            }
+        });
+
+        // 顯示總分
+        const summaryElement = document.getElementById('summary');
+        summaryElement.textContent = "測驗結果: 答對 " + correctCount + " / " + totalCount + " 格";
+
+        if (correctCount === totalCount) {
+            summaryElement.className = "summary correct";
+        } else if (correctCount >= totalCount * 0.6) {
+            summaryElement.className = "summary warning";
+        } else {
+            summaryElement.className = "summary incorrect";
+        }
+    }
+</script>
+
+</body>
+</html>
